@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Job Hunt Tool (Toggle)
+Comment=Toggle the job-hunt-tool systemd user service
+Exec=gnome-terminal -- bash -lc '$HOME/job-hunt-tool/src/toggle_service.sh'
+Icon=job-hunt-tool
+Terminal=false
+Type=Application
+Categories=Utility;

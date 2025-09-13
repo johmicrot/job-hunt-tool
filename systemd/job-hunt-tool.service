@@ -1,0 +1,12 @@
+[Unit]
+Description=Job Hunt Tool – Watch and file printed PDFs
+After=default.target
+
+[Service]
+ExecStart=%h/job-hunt-tool/src/job_hunt_tool.sh
+Restart=always
+RestartSec=2
+EnvironmentFile=%h/job-hunt-tool/.env
+
+[Install]
+WantedBy=default.target
