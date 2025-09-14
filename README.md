@@ -11,72 +11,57 @@ So I built **Job Hunt Tool** — an automation that listens for PDFs printed fro
 
 ---
 
-## 🤔 Why?
-Did I spend ~4 hours making an automation tool that saves ~40 seconds per application?  
+## 🛠️ Requirements
 
-**Yessir.**  
-
-But sometimes it’s more about the **adventure of building tools** than the raw time saved. Along the way, it reinforced my skills with:  
-- Linux automation (CUPS-PDF, inotify)  
-- Bash scripting best practices  
-- Packaging scripts as a portable, installable app  
-- Creating desktop launchers and systemd user services  
-
----
-
-## 📂 How it works
-- You print a job posting via **CUPS-PDF** printer.  
-- The watcher script sees the new PDF.  
-- It files it into:
-  ```
-  ~/jobs/YYYY/MM/DD.urlname/job.pdf
-  ```
-- Copies your **cover letter** into the same folder.  
-- Prompts you to select one of your **resume sets** from `RESUME_DIR`, and copies it into a subfolder.  
-
-Example:
-```
-~/jobs/2025/09/13.coolstartup/
-    job.pdf
-    JohnRothmanCoverLetter.docx
-    resumes/python/resume.pdf
-```
+- **OS**: Ubuntu 24.04 LTS (GNOME desktop, default)
+- **Browsers**: Firefox (snap), Brave, or Chromium (must be able to print via CUPS‑PDF)
+- **System**: `systemd` (user services)
+- **Shell**: Bash
+- **Dependencies** (installer handles):
+  - `printer-driver-cups-pdf`, `inotify-tools`, `zenity`, `rsync`, `gnome-terminal`, `libnotify-bin`
+- Optional: `git`
 
 ---
 
 ## ⚙️ Setup
-1. Clone and install:
-   ```bash
-   git clone https://github.com/johmicrot/job-hunt-tool.git
-   cd job-hunt-tool
-   bash install.sh
-   ```
+```bash
+git clone https://github.com/johmicrot/job-hunt-tool.git
+cd job-hunt-tool
+bash install.sh
+```
 
-2. Create your `.env` (the tool won’t run without it):
-   ```bash
-   cp .env.example .env
-   nano .env
-   ```
-   - `DEST_ROOT` = root folder where organized jobs are stored  
-   - `COVER_LETTER` = path to your cover letter file  
-   - `RESUME_DIR` = folder containing subfolders of resume variants  
-   - `WATCH_DIR` = usually your CUPS-PDF output folder  
-
----
-
-## 🖥️ Usage
-- Click the **Job Hunt Tool Toggle** desktop icon to enable/disable the background watcher.  
-- Print a job posting → it gets automatically filed.  
-- A dialog lets you pick which resume set to copy.  
+Create your `.env` (required):
+```bash
+cp .env.example .env
+nano .env
+```
+- `DEST_ROOT` – where organized jobs go (`~/jobs` by default)
+- `COVER_LETTER` – path to your cover letter
+- `RESUME_DIR` – parent directory with subfolders for resume variants
+- `WATCH_DIR` – CUPS‑PDF output directory (e.g., `~/PDF`)
 
 ---
 
-## 📜 License
-This is a personal project shared publicly.  
-If you’d like to reuse or adapt it, feel free — but please credit the original work.  
-(If needed, an MIT license can be added later for clarity.)  
+## 🧭 Quick walkthrough (with screenshots)
 
----
+### 1) Print the page via CUPS‑PDF
+In the browser print dialog, choose the **PDF** printer (the CUPS‑PDF virtual printer). Then click **Print**.
 
-### 🧑‍💻 Final Thought
-This project is less about shaving seconds and more about **reinforcing skills in Linux automation, system integration, and workflow design**. If it inspires you to automate even tiny annoyances in your own workflow, then it was worth every minute. 🚀
+![Choose PDF printer](assets/print-dialog.png)
+
+### 2) Pick a resume set to copy
+After printing, a dialog pops up so you can select which **resume set** to include (folders under `RESUME_DIR`).
+
+![Select resume set](assets/resume-select.png)
+
+### 3) Resulting output
+The tool files the PDF and copies your **cover letter** plus selected **resume set** into a dated folder:
+
+```
+~/jobs/YYYY/MM/DD.urlname/
+  ├─ job.pdf
+  ├─ CoverLetterTemplate.docx
+  └─ <chosen-resume-set>/
+```
+
+![Final output folder](assets/final-output.png)
