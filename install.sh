@@ -9,17 +9,47 @@ echo -e "${CYAN}${BOLD}==> Installing Job Hunt Tool${RESET}"
 echo "Target directory: $APPDIR"
 mkdir -p "$APPDIR"
 
-echo -e "${CYAN}==> Copying project files...${RESET}"
-if ! cp -a "$SRCDIR"/. "$APPDIR"/; then
-  echo -e "${RED}${BOLD}ERROR:${RESET} Failed to copy files from $SRCDIR to $APPDIR"
-  echo "Press ENTER to close..."; read; exit 1
+echo -e "${CYAN}==> Copying project files (excluding Git metadata)...${RESET}"
+if command -v rsync >/dev/null 2>&1; then
+  # Prefer rsync if available
+  if ! rsync -a --delete \
+      --exclude=".git/" --exclude=".gitignore" --exclude=".gitattributes" --exclude=".gitmodules" \
+      "$SRCDIR"/ "$APPDIR"/; then
+    echo -e "${RED}${BOLD}ERROR:${RESET} Failed to copy files with rsync"
+    echo "Press ENTER to close..."; read; exit 1
+  fi
+else
+  # Portable fallback using tar to exclude .git*
+  if ! ( tar -C "$SRCDIR" \
+        --exclude=".git" --exclude=".git/*" \
+        --exclude=".gitignore" --exclude=".gitattributes" --exclude=".gitmodules" \
+        -cf - . | tar -C "$APPDIR" -xf - ); then
+    echo -e "${RED}${BOLD}ERROR:${RESET} Failed to copy files (tar fallback)"
+    echo "Press ENTER to close..."; read; exit 1
+  fi
 fi
 
 chmod +x "$APPDIR"/src/*.sh || true
+chmod +x "$APPDIR"/src/*.sh || true
 
-echo -e "${CYAN}==> Installing dependencies (this may prompt for your password)...${RESET}"
-sudo apt update || { echo -e "${RED}${BOLD}ERROR:${RESET} apt update failed"; echo "Press ENTER to close..."; read; exit 1; }
-sudo apt install -y printer-driver-cups-pdf inotify-tools zenity rsync gnome-terminal libnotify-bin   || { echo -e "${RED}${BOLD}ERROR:${RESET} Failed to install dependencies"; echo "Press ENTER to close..."; read; exit 1; }
+# ✅ Replace the old apt install section with this:
+echo -e "${CYAN}==> Checking dependencies...${RESET}"
+deps=(printer-driver-cups-pdf inotify-tools zenity rsync gnome-terminal libnotify-bin)
+missing=()
+for p in "${deps[@]}"; do
+  dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p")
+done
+
+if ((${#missing[@]})); then
+  echo -e "${CYAN}==> Installing missing deps: ${missing[*]}${RESET}"
+  sudo dpkg --configure -a || true
+  sudo apt update || { echo -e "${RED}${BOLD}ERROR:${RESET} apt update failed"; echo "Press ENTER to close..."; read; exit 1; }
+  if ! sudo apt install -y "${missing[@]}"; then
+    echo -e "${RED}${BOLD}ERROR:${RESET} Failed to install dependencies"; echo "Press ENTER to close..."; read; exit 1
+  fi
+else
+  echo -e "${GREEN}All dependencies already installed. Skipping apt.${RESET}"
+fi
 
 if snap list 2>/dev/null | grep -q '^firefox\b'; then
   echo -e "${CYAN}==> Connecting snap Firefox to cups-control${RESET}"
